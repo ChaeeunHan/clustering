@@ -44,7 +44,7 @@ class Tag():
     sort = dict(sorted(self.frequency.items(), key=itemgetter(1), reverse=True)[:21])
     # print(sort)
 
-    # self.tag_attach(tags_csv, sort, 0)
+    self.tag_attach(tags_csv, sort, 0)
     self.tag_attach(tags_csv, sort, 1)
 
 if __name__ == "__main__":
