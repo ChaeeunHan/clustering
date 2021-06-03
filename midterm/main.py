@@ -5,15 +5,32 @@ from tqdm import tqdm
 import glob
 import cv2
 import os.path
+from operator import itemgetter
+import shutil
+import pandas as pd
+import csv
 
 class VisualCluster():
   def __init__(self):
-    self.clusters = list(range(8))
-    # self.clusters = [2,3,4,5,6]
-    # self.clusters = [4,5,6]
+    self.clusters = [0]
     self.dataset_pth = "clustered/"
-
     self.cd = ColorDescriptor((8, 12, 3))
+    self.copied = []
+    self.cluster_ind = 0
+    self.tag_file = "Tag.csv"
+    self.tag_path = 'clustered/0/tag.csv'
+    self.frequent_tags = {'seattle': 7564, 'washington': 2958, 'usa': 785, 'wa': 718, 'convention': 667, '2009': 533, 'square': 512, 'redmond': 509, '2012': 501, 'iphoneography': 492, 'uploaded:by=instagram': 489, 'squareformat': 481, 'instagramapp': 478, 'park': 474, 'rf': 444, 'unitedstates': 431, '2010': 411, 'furry': 402, 'con': 402, 'rainfurrest': 402, 'rf2012': 402}
+    self.tags_csv = pd.read_csv(self.tag_file, names= ['img number', 'num tag', 'str tag'])
+
+  def write_tags(self, searchResults, writer):
+    # print(searchResults)
+    tags = []
+    for (score, resultID) in searchResults:
+      tag = self.tags_csv.loc[(self.tags_csv['img number'].astype(str) == resultID.split('.')[0])]['str tag']
+      for t in tag:
+        if t not in self.frequent_tags and t not in tags:
+          tags.append(t)
+    writer.writerow(tags)
 
   def make_index(self, cluster_pth, index_file):
     # open the output index file for writing
@@ -39,60 +56,29 @@ class VisualCluster():
     output.close()
 
 
-  def run_search(self, query_pth, index_file, cluster):
+  def run_search(self, query_pth, index_file, cluster, writer):
     # load the query image and describe it
     query = cv2.imread(query_pth)
     features = self.cd.describe(query)
 
     # perform the search
     searcher = Searcher(index_file)
-    results = searcher.search(features, limit=15)
+    results = searcher.search(features, limit=5)
 
-    # display the query
-    # cv2.imshow("Query", query)
-
-    # output file for img names
-    save_name = query_pth.replace("/", "_") + '.csv'
-    output = open(save_name, "w")
-
-    # loop over the results
-    imgs = []
     for (score, resultID) in results:
-      # load the result image and display it
-      imgs.append(cv2.imread(cluster + resultID))
-      # print(resultID)
-      output.write('%s\n' % resultID)
-      # result = cv2.imread(self.dataset_pth + "/" + resultID)
-      # cv2.imshow("Result", result)
-      # cv2.waitKey(0)
+      img = self.dataset_pth + '0/' + resultID
+      copy_dir = self.dataset_pth + '0/' + str(self.cluster_ind) + '/' + resultID
+      # print(resultID, img, copy_dir)
+      shutil.copy(img, copy_dir)
+      self.copied.append(resultID)
+    self.write_tags(results,writer)
 
-    output.close()
-    # save_name = query_pth.replace("clustered/","").replace("/","_")
-    # print("visual cluster saved at: " + save_name)
-    # self.show_images(imgs, save_name)
-
-
-  # def show_images(self, images, name, figsize=(20, 10), columns=5):
-  #   plt.figure(figsize=figsize)
-  #   plt.tight_layout()
-  #
-  #   for i, image in enumerate(images):
-  #     ax = plt.subplot(len(images) / columns + 1, columns, i + 1)
-  #     plt.setp(ax.get_xticklabels(), visible=False)
-  #     plt.setp(ax.get_yticklabels(), visible=False)
-  #     plt.imshow(image)
-  #
-  #   plt.suptitle("Visual cluster from Geo-cluster " + name[:name.index("_")])
-  #   fig = plt.gcf()
-  #   plt.show()
-  #   #save as a single image file
-  #   fig.savefig("results/" + name  + ".png")
-  #   plt.cla()
-
-  def save_txt(self, imgaes):
-    for i, image in enumerate(images):
-      break
-
+  def createDirectory(self, directory):
+    try:
+      if not os.path.exists(directory):
+        os.makedirs(directory)
+    except OSError:
+      print("Error: Failed to create the directory.")
 
   def main(self):
 
@@ -108,12 +94,14 @@ class VisualCluster():
         self.make_index(cluster_pth, idx_file)
         print("index file created: " + idx_file)
 
-      #actual search (each img)
-      # print(len(glob.glob(cluster_pth + "*.jpg")))
-      for imagePath in ['clustered/0/3286772707.jpg']:
-        # print(imagePath)
-        self.run_search(imagePath, idx_file, cluster_pth)
-
+      with open(self.tag_path, 'w') as writefile:
+        writer = csv.writer(writefile)
+        for imagePath in glob.glob(cluster_pth + "*.jpg"):
+          if imagePath not in self.copied:
+            print(self.cluster_ind)
+            self.createDirectory(self.dataset_pth + '0/' + str(self.cluster_ind))
+            self.run_search(imagePath, idx_file, cluster_pth, writer)
+            self.cluster_ind += 1
 
 if __name__ == "__main__":
   VC = VisualCluster()
