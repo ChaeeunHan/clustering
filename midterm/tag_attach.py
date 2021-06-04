@@ -11,6 +11,11 @@ class Tag():
     self.write_path = ['tag_attached/', 'tag_attached_filtered/']
     self.frequency = {}
 
+    self.tag_path = 'clustered/0/tag.csv'
+
+    self.cluster_ind = 0
+    self.dataset_pth = "clustered/0/"
+
   def tag_attach(self, tags_csv, frequent, filter):
     for clustered_file in glob.glob("*.jpg.csv"):
         with open(clustered_file,  newline='') as csvfile, \
@@ -35,6 +40,21 @@ class Tag():
         else:
             self.frequency[tag] = 1
 
+  def tags_in_row(self, tags_csv, frequent):
+      with open(self.tag_path, 'w') as writefile:
+        writer = csv.writer(writefile)
+        for cluster_ind in range(892):
+            print(cluster_ind)
+            tags = []
+            for imagePath in glob.glob(self.dataset_pth + str(cluster_ind) + "/*.jpg"):
+                tag = tags_csv.loc[(tags_csv['img number'].astype(str) == imagePath.split('/')[3][:-4])][
+                      'str tag']
+                for t in tag:
+                    if t not in frequent and t not in tags:
+                        tags.append(t)
+            writer.writerow(tags)
+            # print(tags)
+
   def main(self):
 
     tags_csv = pd.read_csv(self.tag_file, names= ['img number', 'num tag', 'str tag'])
@@ -44,8 +64,10 @@ class Tag():
     sort = dict(sorted(self.frequency.items(), key=itemgetter(1), reverse=True)[:21])
     # print(sort)
 
-    self.tag_attach(tags_csv, sort, 0)
-    self.tag_attach(tags_csv, sort, 1)
+    # self.tag_attach(tags_csv, sort, 0)
+    # self.tag_attach(tags_csv, sort, 1)
+
+    self.tags_in_row(tags_csv, sort)
 
 if __name__ == "__main__":
   T = Tag()
