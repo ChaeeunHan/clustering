@@ -18,7 +18,7 @@ class VisualCluster():
     self.copied = []
     self.cluster_ind = 0
     self.tag_file = "Tag.csv"
-    self.tag_path = 'clustered/0/tag.csv'
+    self.tag_path = 'tag.csv'
     self.frequent_tags = {'seattle': 7564, 'washington': 2958, 'usa': 785, 'wa': 718, 'convention': 667, '2009': 533, 'square': 512, 'redmond': 509, '2012': 501, 'iphoneography': 492, 'uploaded:by=instagram': 489, 'squareformat': 481, 'instagramapp': 478, 'park': 474, 'rf': 444, 'unitedstates': 431, '2010': 411, 'furry': 402, 'con': 402, 'rainfurrest': 402, 'rf2012': 402}
     self.tags_csv = pd.read_csv(self.tag_file, names= ['img number', 'num tag', 'str tag'])
 

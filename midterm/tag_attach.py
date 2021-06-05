@@ -11,7 +11,7 @@ class Tag():
     self.write_path = ['tag_attached/', 'tag_attached_filtered/']
     self.frequency = {}
 
-    self.tag_path = 'clustered/0/tag.csv'
+    self.tag_path = 'tag.csv'
 
     self.cluster_ind = 0
     self.dataset_pth = "clustered/0/"
